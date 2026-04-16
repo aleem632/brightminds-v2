@@ -1,15 +1,21 @@
 // ===== CONFIG =====
 const API = "https://9x8r1qewma.execute-api.eu-west-1.amazonaws.com/prod";
-const CLAUDE_API = "https://api.anthropic.com/v1/messages";
 
 // ===== NAV =====
 const nav = document.getElementById('nav');
 if(nav) window.addEventListener('scroll', () => nav.classList.toggle('scrolled', window.scrollY > 40));
 function toggleMenu(){ document.getElementById('mobile-menu')?.classList.toggle('open'); }
 
+// ===== STUDENT NAME =====
+function getStudentName(qid){
+  return localStorage.getItem(`bm_name_${qid}`) || '';
+}
+function saveStudentName(qid, name){
+  localStorage.setItem(`bm_name_${qid}`, name);
+}
+
 // ===== HOMEWORK PAGE =====
 let questions = [];
-let submissions = JSON.parse(localStorage.getItem('bm_subs') || '[]');
 
 async function loadHomework(){
   const grid = document.getElementById('hw-grid');
@@ -29,20 +35,24 @@ async function loadHomework(){
 }
 
 function buildHwCard(q){
-  const sub = submissions.find(s => s.questionId === q.id);
+  // Check if THIS student already submitted — based on their saved name
+  const savedName = getStudentName(q.id);
+  const submitted = savedName ? localStorage.getItem(`bm_sub_${q.id}_${savedName}`) : null;
+  const sub = submitted ? JSON.parse(submitted) : null;
+
   return `<div class="hw-card" id="hwcard-${q.id}">
     <div class="hw-card-head" onclick="toggleHwCard('${q.id}')">
       <div class="hw-card-head-left">
         <span class="hw-card-title">${q.title}</span>
         <span class="badge badge-${q.level || 'medium'}">${q.level || 'medium'}</span>
         <span class="badge badge-${q.type}">${labelType(q.type)}</span>
-        ${sub ? `<span class="badge badge-${sub.feedback ? 'graded' : 'pending'}">${sub.feedback ? 'graded ✓' : 'submitted'}</span>` : ''}
+        ${sub ? `<span class="badge badge-graded">submitted ✓</span>` : ''}
       </div>
       <span class="hw-toggle">▾</span>
     </div>
     <div class="hw-card-body">
       <div class="hw-label">Task</div>
-      <div class="hw-prompt-box">${q.prompt}</div>
+      <div class="hw-prompt-box">${q.type === 'blank' ? q.prompt.replace(/\[BLANK\]/g, '____') : q.prompt}</div>
       <div id="hwbody-${q.id}">${buildAnswerArea(q, sub)}</div>
     </div>
   </div>`;
@@ -53,8 +63,10 @@ function labelType(t){
 }
 
 function buildAnswerArea(q, sub){
-  if(sub && sub.feedback) return buildFeedback(sub);
-  if(sub) return `<div class="submitted-box">✓ Submitted! Your teacher will review and give feedback soon.</div>`;
+  if(sub) return `<div class="submitted-box">
+    ✓ Submitted on ${new Date(sub.submittedAt).toLocaleDateString('en-IE',{day:'numeric',month:'short',year:'numeric'})}
+    <br/><br/><strong>Your answer:</strong> ${sub.answer}
+  </div>`;
 
   let answerHtml = '';
   if(q.type === 'writing'){
@@ -65,7 +77,7 @@ function buildAnswerArea(q, sub){
     let sentence = '';
     parts.forEach((p,i) => {
       sentence += p;
-      if(i < parts.length - 1) sentence += `<input class="blank-input" id="blank-${q.id}-${i}" placeholder="   ?" />`;
+      if(i < parts.length - 1) sentence += `<input class="blank-input" id="blank-${q.id}-${i}" placeholder="?" />`;
     });
     answerHtml = `<div class="hw-label">Fill in the blanks</div>
       <div class="blank-sentence">${sentence}</div>`;
@@ -87,21 +99,10 @@ function buildAnswerArea(q, sub){
 
   return `${answerHtml}
     <div class="hw-submit-row">
-      <input class="hw-name-input" id="name-${q.id}" placeholder="Your name…" />
+      <input class="hw-name-input" id="name-${q.id}" placeholder="Your name…" value="${getStudentName(q.id)}" />
       <button class="btn btn-primary btn-sm" onclick="submitHw('${q.id}')">Submit answer</button>
     </div>
     <div id="hwmsg-${q.id}"></div>`;
-}
-
-function buildFeedback(sub){
-  return `<div class="hw-feedback-box">
-    <div class="hw-feedback-label">Your feedback</div>
-    <div class="hw-feedback-body">${(sub.feedback||'').replace(/\n/g,'<br>')}</div>
-    ${sub.grade ? `<div style="margin-top:14px;display:flex;align-items:baseline;gap:6px">
-      <span class="hw-grade">${sub.grade}</span>
-      <span style="font-size:14px;color:var(--ink3)">/ 10</span>
-    </div>` : ''}
-  </div>`;
 }
 
 function toggleHwCard(id){ document.getElementById('hwcard-'+id)?.classList.toggle('open'); }
@@ -122,8 +123,7 @@ function getAnswer(q){
   if(q.type==='writing') return document.getElementById('ans-'+q.id)?.value.trim() || '';
   if(q.type==='blank'){
     const parts = q.prompt.split(/\[BLANK\]/g);
-    return parts.map((_,i) => i < parts.length-1 ? (document.getElementById(`blank-${q.id}-${i}`)?.value.trim()||'___') : '').join('').trim() ||
-      Array.from({length: parts.length-1}, (_,i) => document.getElementById(`blank-${q.id}-${i}`)?.value.trim()||'').join(', ');
+    return Array.from({length: parts.length-1}, (_,i) => document.getElementById(`blank-${q.id}-${i}`)?.value.trim()||'').join(', ');
   }
   if(q.type==='mcq'){
     const sel = document.querySelector(`input[name="mcq-${q.id}"]:checked`);
@@ -142,6 +142,7 @@ async function submitHw(qid){
   const name = document.getElementById('name-'+qid)?.value.trim();
   const answer = getAnswer(q);
   const msgEl = document.getElementById('hwmsg-'+qid);
+
   if(!name){ if(msgEl) msgEl.innerHTML = `<div class="error-msg">Please enter your name.</div>`; return; }
   if(!answer){ if(msgEl) msgEl.innerHTML = `<div class="error-msg">Please answer the question first.</div>`; return; }
 
@@ -152,13 +153,21 @@ async function submitHw(qid){
     const res = await fetch(`${API}/submit`, {
       method:'POST',
       headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({ studentName:name, assignmentId:qid, questionTitle:q.title, questionType:q.type, answer, correctAnswer: q.correctAnswer||null })
+      body: JSON.stringify({
+        studentName: name,
+        assignmentId: qid,
+        questionTitle: q.title,
+        questionType: q.type,
+        answer,
+        correctAnswer: q.correctAnswer || null
+      })
     });
     const data = await res.json();
     if(data.success){
-      const sub = { id: Date.now(), questionId: qid, studentName: name, answer, feedback: null, grade: null };
-      submissions.push(sub);
-      localStorage.setItem('bm_subs', JSON.stringify(submissions));
+      // Save per student per question — other students won't see this
+      saveStudentName(qid, name);
+      const sub = { answer, submittedAt: new Date().toISOString() };
+      localStorage.setItem(`bm_sub_${qid}_${name}`, JSON.stringify(sub));
       const body = document.getElementById('hwbody-'+qid);
       if(body) body.innerHTML = buildAnswerArea(q, sub);
     }
@@ -198,13 +207,13 @@ function renderStats(){
   const el = document.getElementById('teacher-stats');
   if(!el) return;
   const total = allSubmissions.length;
-  const graded = allSubmissions.filter(s=>s.feedback).length;
-  const avg = graded ? (allSubmissions.filter(s=>s.grade).reduce((a,s)=>a+parseFloat(s.grade||0),0)/graded).toFixed(1) : '—';
+  const el2 = document.getElementById('teacher-stats');
+  if(!el2) return;
   el.innerHTML = `
-    <div class="t-stat"><div class="t-stat-label">Submissions</div><div class="t-stat-val">${total}</div></div>
-    <div class="t-stat"><div class="t-stat-label">Graded</div><div class="t-stat-val">${graded}</div></div>
-    <div class="t-stat"><div class="t-stat-label">Pending</div><div class="t-stat-val">${total-graded}</div></div>
-    <div class="t-stat"><div class="t-stat-label">Avg grade</div><div class="t-stat-val">${avg}</div></div>
+    <div class="t-stat"><div class="t-stat-label">Total submissions</div><div class="t-stat-val">${total}</div></div>
+    <div class="t-stat"><div class="t-stat-label">Questions live</div><div class="t-stat-val">${allQuestions.length}</div></div>
+    <div class="t-stat"><div class="t-stat-label">Students</div><div class="t-stat-val">${[...new Set(allSubmissions.map(s=>s.studentName))].length}</div></div>
+    <div class="t-stat"><div class="t-stat-label">This week</div><div class="t-stat-val">${allSubmissions.filter(s=>{ const d=new Date(s.submittedAt); const now=new Date(); return (now-d) < 7*24*60*60*1000; }).length}</div></div>
   `;
 }
 
@@ -215,79 +224,19 @@ function renderSubmissions(){
   const sorted = [...allSubmissions].sort((a,b)=> new Date(b.submittedAt)-new Date(a.submittedAt));
   el.innerHTML = sorted.map(sub => {
     const q = allQuestions.find(x=>x.id===sub.assignmentId);
-    return `<div class="t-sub-card" id="tsub-${sub.id}">
+    return `<div class="t-sub-card">
       <div class="t-sub-header">
         <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
           <span class="t-sub-name">${sub.studentName}</span>
           <span class="badge badge-${q?.level||'medium'}">${q?.title||'Assignment'}</span>
           <span class="badge badge-${q?.type||'writing'}">${labelType(q?.type||'writing')}</span>
-          <span class="badge badge-${sub.feedback?'graded':'pending'}">${sub.feedback?'graded ✓':'pending'}</span>
         </div>
         <span class="t-sub-date">${new Date(sub.submittedAt).toLocaleDateString('en-IE',{day:'numeric',month:'short',year:'numeric'})}</span>
       </div>
-      <div class="t-sub-answer">${sub.answer}</div>
-      ${sub.feedback ? `
-        <div class="hw-feedback-box">
-          <div class="hw-feedback-label">AI Feedback</div>
-          <div class="hw-feedback-body">${sub.feedback.replace(/\n/g,'<br>')}</div>
-          ${sub.grade?`<div style="margin-top:10px;display:flex;align-items:baseline;gap:6px"><span class="hw-grade">${sub.grade}</span><span style="font-size:13px;color:var(--ink3)">/10</span></div>`:''}
-        </div>
-      ` : `
-        <div id="tfb-${sub.id}" style="margin-bottom:10px"></div>
-        <button class="btn btn-primary btn-sm" id="tbtn-${sub.id}" onclick="gradeWithAI('${sub.id}')">Grade with AI ✨</button>
-      `}
+      <div class="t-sub-answer"><strong>Answer:</strong> ${sub.answer}</div>
+      ${q?.correctAnswer ? `<div style="margin-top:8px;font-size:13px;color:var(--teal)">✅ Correct answer: <strong>${q.correctAnswer}</strong></div>` : ''}
     </div>`;
   }).join('');
-}
-
-async function gradeWithAI(subId){
-  const sub = allSubmissions.find(s=>s.id===subId);
-  const q = allQuestions.find(x=>x.id===sub?.assignmentId);
-  const btn = document.getElementById('tbtn-'+subId);
-  const fb = document.getElementById('tfb-'+subId);
-  if(btn){ btn.disabled=true; btn.textContent='Grading…'; }
-  if(fb) fb.innerHTML=`<div class="hw-feedback-box" style="margin-bottom:10px"><div class="hw-feedback-label" style="color:var(--teal)">AI is analysing…</div><div class="loading-dots" style="color:var(--teal)"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div></div>`;
-
-  const isAutoGrade = q?.type === 'mcq' || q?.type === 'truefalse';
-  const system = isAutoGrade
-    ? `You are an English teacher. The student answered a ${q.type} question.
-Question: "${q.prompt}"
-Correct answer: "${q.correctAnswer || 'Not specified'}"
-Student answer: "${sub.answer}"
-Check if the answer is correct. Respond ONLY as valid JSON: {"overall":"brief comment","correct":true,"grade":"8","positive":"what they did well"}`
-    : `You are an experienced English teacher marking a student's homework.
-Assignment: "${q?.title}" (${q?.level} level, type: ${q?.type})
-Task: "${q?.prompt}"
-Analyse the student's answer and give detailed feedback. Respond ONLY as valid JSON:
-{"overall":"1-2 sentence comment","mistakes":[{"error":"exact error","correction":"corrected version","explanation":"why wrong"}],"positive":"one thing done well","grade":"7"}
-Mistakes array: 0-3 items. Grade: number 1-10 as string.`;
-
-  try{
-    const res = await fetch(CLAUDE_API,{
-      method:'POST',
-      headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:1000,system,messages:[{role:'user',content:sub.answer}]})
-    });
-    const data = await res.json();
-    const raw = (data.content?.[0]?.text||'{}').replace(/```json|```/g,'').trim();
-    const p = JSON.parse(raw);
-
-    let html = `${p.overall}\n\n`;
-    if(p.mistakes?.length){
-      html += `Mistakes to fix:\n`;
-      p.mistakes.forEach((m,i)=>{ html+=`${i+1}. ❌ "${m.error}" → ✅ "${m.correction}"\n   ${m.explanation}\n`; });
-    }
-    if(p.correct !== undefined) html += `\n${p.correct ? '✅ Correct answer!' : '❌ Incorrect — see the correct answer above.'}\n`;
-    html += `\n👍 Well done: ${p.positive}`;
-
-    sub.feedback = html;
-    sub.grade = p.grade;
-    renderSubmissions();
-    renderStats();
-  }catch(e){
-    if(fb) fb.innerHTML=`<div class="error-msg" style="margin-bottom:10px">Grading failed. Please try again.</div>`;
-    if(btn){ btn.disabled=false; btn.textContent='Grade with AI ✨'; }
-  }
 }
 
 function renderQuestions(){
@@ -302,7 +251,7 @@ function renderQuestions(){
           <span class="badge badge-${q.level||'medium'}">${q.level||'medium'}</span>
           <span class="badge badge-${q.type}">${labelType(q.type)}</span>
         </div>
-        <button onclick="deleteQuestion('${q.id}')" style="font-size:12px;padding:5px 14px;border:1px solid var(--cream2);border-radius:50px;background:none;cursor:pointer;color:var(--ink3);font-family:inherit">Remove</button>
+        <button onclick="deleteQuestion('${q.id}')" style="font-size:12px;padding:5px 14px;border:1px solid var(--cream2);border-radius:50px;background:none;cursor:pointer;color:var(--red);font-family:inherit">Delete</button>
       </div>
       <div class="t-sub-answer" style="margin-top:8px">${q.prompt}</div>
       ${q.options ? `<div style="margin-top:8px;font-size:12px;color:var(--ink3)">Options: ${q.options.join(' | ')} — Correct: <strong>${q.correctAnswer}</strong></div>` : ''}
@@ -311,7 +260,6 @@ function renderQuestions(){
   `).join('');
 }
 
-// Show/hide MCQ options builder based on type
 function onTypeChange(){
   const type = document.getElementById('new-type')?.value;
   document.getElementById('mcq-builder-section').style.display = type==='mcq' ? 'block' : 'none';
@@ -357,7 +305,7 @@ async function addQuestion(){
       Array.from({length:4},(_,i)=>{ const el=document.getElementById(`mcq-opt-${i}`); if(el) el.value=''; });
       await fetchQuestions();
       renderQuestions();
-      showTeacherTab('submissions');
+      alert('Question added successfully!');
     }
   }catch(e){
     alert('Failed to add question. Please try again.');
@@ -367,9 +315,22 @@ async function addQuestion(){
 }
 
 async function deleteQuestion(id){
-  if(!confirm('Delete this question?')) return;
-  allQuestions = allQuestions.filter(q=>q.id!==id);
-  renderQuestions();
+  if(!confirm('Delete this question? This cannot be undone.')) return;
+  try{
+    const res = await fetch(`${API}/questions`, {
+      method:'DELETE',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ id })
+    });
+    const data = await res.json();
+    if(data.success){
+      allQuestions = allQuestions.filter(q=>q.id!==id);
+      renderQuestions();
+      renderStats();
+    }
+  }catch(e){
+    alert('Failed to delete. Please try again.');
+  }
 }
 
 function showTeacherTab(tab){
@@ -380,14 +341,12 @@ function showTeacherTab(tab){
   if(panel) panel.style.display='block';
 }
 
-// Contact form
 function submitContact(e){
   e.preventDefault();
   document.getElementById('contact-success').style.display='block';
   e.target.reset();
 }
 
-// Init
 document.addEventListener('DOMContentLoaded',()=>{
   loadHomework();
   loadTeacher();
