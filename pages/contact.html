@@ -54,20 +54,21 @@
           <div class="form-row" style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
             <div class="form-group">
               <label class="form-label">Your name</label>
-              <input class="form-control" type="text" placeholder="Parent or student name" required />
+              <input class="form-control" type="text" name="parent_name" placeholder="Parent or student name" required />
             </div>
             <div class="form-group">
               <label class="form-label">Student name</label>
-              <input class="form-control" type="text" placeholder="Child's name" />
+             <input class="form-control" type="text" name="student_name" placeholder="Child's name" />
             </div>
           </div>
-          <div class="form-group">
-            <label class="form-label">Email address</label>
-            <input class="form-control" type="email" placeholder="your@email.com" required />
-          </div>
+         <div class="form-group">
+           <label class="form-label">WeChat ID</label>
+            <input class="form-control" type="text" name="wechat_id" placeholder="Your WeChat ID" required />
+            </div>
           <div class="form-group">
             <label class="form-label">Student age / level</label>
-            <select class="form-control">
+            <select class="form-control" name="student_age">
+              <option>Age 6–10</option>
               <option>Age 10–11</option>
               <option>Age 11–12</option>
               <option>Age 12–13</option>
@@ -81,7 +82,7 @@
           </div>
           <div class="form-group">
             <label class="form-label">Message</label>
-            <textarea class="form-control form-control-textarea" placeholder="Tell me a bit about what you're hoping to work on…" required></textarea>
+           <textarea class="form-control form-control-textarea" name="message" placeholder="Tell me a bit about what you're hoping to work on…" required></textarea>
           </div>
           <button type="submit" class="btn btn-primary" style="width:100%;text-align:center">Send message →</button>
           <input type="hidden" name="_subject" value="New enquiry from BrightMinds website"/>
