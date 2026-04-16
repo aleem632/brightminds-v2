@@ -50,7 +50,7 @@
         </div>
       </div>
       <div class="contact-form-card">
-        <form onsubmit="submitContact(event)">
+        <form action="https://formspree.io/f/mgoralzb" method="POST">
           <div class="form-row" style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
             <div class="form-group">
               <label class="form-label">Your name</label>
@@ -84,6 +84,8 @@
             <textarea class="form-control form-control-textarea" placeholder="Tell me a bit about what you're hoping to work on…" required></textarea>
           </div>
           <button type="submit" class="btn btn-primary" style="width:100%;text-align:center">Send message →</button>
+          <input type="hidden" name="_subject" value="New enquiry from BrightMinds website"/>
+          <input type="hidden" name="_next" value="https://www.brightmindsenglish.com/pages/contact.html"/>
           <div id="contact-success" style="display:none;background:var(--teal-light);color:var(--teal);padding:14px 18px;border-radius:var(--radius);font-size:14px;margin-top:14px;text-align:center;font-weight:600">
             ✓ Message sent! Jack will reply within 24 hours.
           </div>
