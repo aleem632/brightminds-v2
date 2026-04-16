@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Contact — BrightMinds English</title>
+<link rel="stylesheet" href="../css/style.css"/>
+</head>
+<body>
+<nav class="nav" id="nav">
+  <a href="../index.html" class="nav-logo">Bright<em>Minds</em></a>
+  <div class="nav-links">
+    <a href="../index.html" class="nav-link">Home</a>
+    <a href="homework.html" class="nav-link">Homework</a>
+    <a href="about.html" class="nav-link">About</a>
+    <a href="contact.html" class="nav-link active">Contact</a>
+  </div>
+  <a href="homework.html" class="nav-cta">View homework →</a>
+  <button class="nav-burger" onclick="toggleMenu()">&#9776;</button>
+</nav>
+<div class="mobile-menu" id="mobile-menu">
+  <a href="../index.html">Home</a>
+  <a href="homework.html">Homework</a>
+  <a href="about.html">About</a>
+  <a href="contact.html">Contact</a>
+</div>
+
+<div class="page-hero">
+  <div style="display:inline-block;font-size:11px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--teal);background:var(--teal-light);padding:5px 14px;border-radius:50px;margin-bottom:16px">Get in touch</div>
+  <h1>Say <em>hello</em></h1>
+  <p>Whether you're a parent, student, or just curious — I'd love to hear from you.</p>
+</div>
+
+<section class="section">
+  <div class="container">
+    <div class="contact-grid">
+      <div class="contact-info">
+        <div class="section-label">Contact Jack</div>
+        <h2>Let's talk about your learning</h2>
+        <p style="margin-bottom:0">Fill in the form and I'll get back to you within 24 hours. I'm always happy to have a free 15-minute chat before you sign up.</p>
+        <div class="contact-details">
+          <div class="contact-detail"><span>📧</span><span>jack@brightmindsenglish.com</span></div>
+          <div class="contact-detail"><span>📍</span><span>Dublin, Ireland — teaching online worldwide</span></div>
+          <div class="contact-detail"><span>🕐</span><span>Mon–Fri, 9am–6pm IST</span></div>
+          <div class="contact-detail"><span>🌏</span><span>Students welcome from China and worldwide</span></div>
+        </div>
+        <div style="margin-top:32px;padding:24px;background:var(--teal-light);border-radius:var(--radius-lg);border-left:3px solid var(--teal)">
+          <div style="font-weight:700;margin-bottom:6px;color:var(--teal)">Free trial lesson</div>
+          <p style="font-size:14px;color:#1e4a4c;margin:0">New students can book a free 30-minute trial lesson. Just mention it in your message!</p>
+        </div>
+      </div>
+      <div class="contact-form-card">
+        <form onsubmit="submitContact(event)">
+          <div class="form-row" style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
+            <div class="form-group">
+              <label class="form-label">Your name</label>
+              <input class="form-control" type="text" placeholder="Parent or student name" required />
+            </div>
+            <div class="form-group">
+              <label class="form-label">Student name</label>
+              <input class="form-control" type="text" placeholder="Child's name" />
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Email address</label>
+            <input class="form-control" type="email" placeholder="your@email.com" required />
+          </div>
+          <div class="form-group">
+            <label class="form-label">Student age / level</label>
+            <select class="form-control">
+              <option>Age 10–11</option>
+              <option>Age 11–12</option>
+              <option>Age 12–13</option>
+              <option>Age 13–14</option>
+              <option>Age 14–15</option>
+              <option>Age 15–16</option>
+              <option>Age 16–17</option>
+              <option>Age 17–18</option>
+              <option>Adult learner</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Message</label>
+            <textarea class="form-control form-control-textarea" placeholder="Tell me a bit about what you're hoping to work on…" required></textarea>
+          </div>
+          <button type="submit" class="btn btn-primary" style="width:100%;text-align:center">Send message →</button>
+          <div id="contact-success" style="display:none;background:var(--teal-light);color:var(--teal);padding:14px 18px;border-radius:var(--radius);font-size:14px;margin-top:14px;text-align:center;font-weight:600">
+            ✓ Message sent! Jack will reply within 24 hours.
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</section>
+
+<footer class="footer">
+  <div class="container footer-inner">
+    <div class="footer-brand">
+      <span class="nav-logo" style="color:white">Bright<em>Minds</em></span>
+      <p>Virtual English School — helping students write, communicate and grow.</p>
+    </div>
+    <div class="footer-links">
+      <a href="../index.html">Home</a>
+      <a href="homework.html">Homework</a>
+      <a href="about.html">About</a>
+      <a href="contact.html">Contact</a>
+    </div>
+    <div class="footer-copy">© 2025 BrightMinds English. All rights reserved.</div>
+  </div>
+</footer>
+<script src="../js/main.js"></script>
+</body>
+</html>
