@@ -69,7 +69,7 @@ function buildMultiAnswerArea(q, sub){
         <button class="tf-btn" id="tf-false-${q.id}-${idx}" onclick="selectTfMulti('${q.id}',${idx},'false')">✗ False</button>
       </div>`;
     } else if(q.type === 'blank'){
-      const parts = question.split(/\[BLANK\]/g);
+      const parts = question.text.split(/\[BLANK\]/g);
       let sentence = '';
       parts.forEach((p,i) => {
         sentence += p;
@@ -87,7 +87,7 @@ function buildMultiAnswerArea(q, sub){
 
     return `<div style="margin-bottom:24px;padding:16px 20px;background:var(--cream);border-radius:var(--radius);border-left:3px solid var(--teal)">
       <div style="font-size:13px;font-weight:600;color:var(--teal);margin-bottom:10px">Question ${idx+1}</div>
-      <div style="font-size:15px;color:var(--ink2);margin-bottom:12px">${q.type==='blank' ? '' : question.text || question}</div>
+      <div style="font-size:15px;color:var(--ink2);margin-bottom:12px">${question.text || question}</div>
       ${inputHtml}
     </div>`;
   }).join('');
@@ -119,7 +119,7 @@ function getMultiAnswers(q){
       if(document.getElementById(`tf-false-${q.id}-${idx}`)?.classList.contains('selected-false')) return 'False';
       return '';
     } else if(q.type === 'blank'){
-      const parts = question.split(/\[BLANK\]/g);
+      const parts = question.text.split(/\[BLANK\]/g);
       return Array.from({length: parts.length-1}, (_,i) => document.getElementById(`blank-${q.id}-${idx}-${i}`)?.value.trim()||'').join(', ');
     } else if(q.type === 'mcq'){
       const sel = document.querySelector(`input[name="mcq-${q.id}-${idx}"]:checked`);
@@ -383,7 +383,7 @@ function renderQuestionBuilder(){
     addHtml = `
       <div class="form-group">
         <label class="form-label">Statement</label>
-        <input class="form-control" id="q-text" placeholder='e.g. "She go to school" is correct English.' />
+        <input class="form-control" id="q-text" placeholder="e.g. She go to school every day is correct English." />
       </div>
       <div class="form-group">
         <label class="form-label">Correct answer</label>
@@ -426,16 +426,6 @@ function renderQuestionBuilder(){
         <textarea class="form-control form-control-textarea" id="q-text" placeholder="e.g. Write 5 sentences about your favourite food."></textarea>
       </div>`;
   }
-
-  container.innerHTML = `
-    ${questionsHtml}
-    <div style="background:var(--white);border-radius:var(--radius);padding:16px 18px;border:1.5px dashed var(--cream2);margin-bottom:12px">
-      <div style="font-size:12px;font-weight:600;color:var(--ink3);margin-bottom:12px">ADD QUESTION ${newQuestions.length+1}</div>
-      ${addHtml}
-      <button class="btn btn-ghost btn-sm" onclick="addQuestionToList()">+ Add this question</button>
-    </div>
-  `;
-}
 
   container.innerHTML = `
     ${questionsHtml}
@@ -494,11 +484,11 @@ async function addAssignment(){
     if(data.success){
       document.getElementById('new-title').value='';
       newQuestions = [];
-      renderQuestionBuilder();
       await fetchQuestions();
       renderQuestions();
       renderStats();
-      alert(`Assignment "${title}" saved with ${newQuestions.length} questions!`);
+      renderQuestionBuilder();
+      alert('Assignment saved successfully!');
       showTeacherTab('submissions');
     }
   }catch(e){
