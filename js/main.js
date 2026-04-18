@@ -355,6 +355,8 @@ let newQuestions = [];
 
 function onTypeChange(){
   newQuestions = [];
+  const container = document.getElementById('questions-builder');
+  if(container) container.innerHTML = '';
   renderQuestionBuilder();
 }
 
