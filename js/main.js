@@ -355,15 +355,15 @@ let newQuestions = [];
 
 function onTypeChange(){
   newQuestions = [];
-  const container = document.getElementById('questions-builder');
-  if(container) container.innerHTML = '';
   renderQuestionBuilder();
 }
 
 function renderQuestionBuilder(){
-  const type = document.getElementById('new-type')?.value;
+  const typeEl = document.getElementById('new-type');
   const container = document.getElementById('questions-builder');
-  if(!container) return;
+  if(!container || !typeEl) return;
+
+  const type = typeEl.value;
 
   const questionsHtml = newQuestions.map((q, idx) => `
     <div style="background:var(--cream);border-radius:var(--radius);padding:14px 18px;margin-bottom:10px;border-left:3px solid var(--teal)">
@@ -371,18 +371,19 @@ function renderQuestionBuilder(){
         <span style="font-size:12px;font-weight:600;color:var(--teal)">Question ${idx+1}</span>
         <button onclick="removeQuestion(${idx})" style="font-size:11px;padding:3px 10px;border:1px solid var(--cream2);border-radius:50px;background:none;cursor:pointer;color:var(--red);font-family:inherit">Remove</button>
       </div>
-      <div style="font-size:13px;color:var(--ink2)">${q.text||q}</div>
+      <div style="font-size:13px;color:var(--ink2)">${q.text}</div>
       ${q.correctAnswer ? `<div style="font-size:12px;color:var(--teal);margin-top:4px">✅ Correct: ${q.correctAnswer}</div>` : ''}
       ${q.options ? `<div style="font-size:12px;color:var(--ink3);margin-top:4px">Options: ${q.options.join(' | ')}</div>` : ''}
     </div>
   `).join('');
 
   let addHtml = '';
+
   if(type === 'truefalse'){
     addHtml = `
       <div class="form-group">
         <label class="form-label">Statement</label>
-        <input class="form-control" id="q-text" placeholder="e.g. She go to school every day is correct English." />
+        <input class="form-control" id="q-text" placeholder='e.g. "She go to school" is correct English.' />
       </div>
       <div class="form-group">
         <label class="form-label">Correct answer</label>
@@ -394,12 +395,12 @@ function renderQuestionBuilder(){
   } else if(type === 'blank'){
     addHtml = `
       <div class="form-group">
-        <label class="form-label">Sentence (use [BLANK] for gaps)</label>
-        <input class="form-control" id="q-text" placeholder="e.g. Last [BLANK] I went on a [BLANK] to Egypt." />
+        <label class="form-label">Sentence — use [BLANK] for gaps</label>
+        <input class="form-control" id="q-text" placeholder="e.g. Last [BLANK] I went to Egypt." />
       </div>
       <div class="form-group">
-        <label class="form-label">Correct answer(s) — separate with comma</label>
-        <input class="form-control" id="q-correct" placeholder="e.g. month, trip" />
+        <label class="form-label">Correct answer</label>
+        <input class="form-control" id="q-correct" placeholder="e.g. month" />
       </div>`;
   } else if(type === 'mcq'){
     addHtml = `
@@ -415,8 +416,8 @@ function renderQuestionBuilder(){
         <input class="form-control" id="q-opt-3" placeholder="Option D" />
       </div>
       <div class="form-group">
-        <label class="form-label">Correct answer (type exact option text)</label>
-        <input class="form-control" id="q-correct" placeholder="e.g. Option A text" />
+        <label class="form-label">Correct answer</label>
+        <input class="form-control" id="q-correct" placeholder="Type exact correct option text" />
       </div>`;
   } else if(type === 'writing'){
     addHtml = `
@@ -425,6 +426,16 @@ function renderQuestionBuilder(){
         <textarea class="form-control form-control-textarea" id="q-text" placeholder="e.g. Write 5 sentences about your favourite food."></textarea>
       </div>`;
   }
+
+  container.innerHTML = `
+    ${questionsHtml}
+    <div style="background:var(--white);border-radius:var(--radius);padding:16px 18px;border:1.5px dashed var(--cream2);margin-bottom:12px">
+      <div style="font-size:12px;font-weight:600;color:var(--ink3);margin-bottom:12px">ADD QUESTION ${newQuestions.length+1}</div>
+      ${addHtml}
+      <button class="btn btn-ghost btn-sm" onclick="addQuestionToList()">+ Add this question</button>
+    </div>
+  `;
+}
 
   container.innerHTML = `
     ${questionsHtml}
@@ -527,12 +538,7 @@ function submitContact(e){
 document.addEventListener('DOMContentLoaded',()=>{
   loadHomework();
   loadTeacher();
-  const typeSelect = document.getElementById('new-type');
-  if(typeSelect){
+  if(document.getElementById('questions-builder')){
     renderQuestionBuilder();
-    typeSelect.addEventListener('change', () => {
-      newQuestions = [];
-      renderQuestionBuilder();
-    });
   }
 });
