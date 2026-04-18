@@ -32,10 +32,10 @@
     <p style="margin-bottom:32px;color:var(--ink3)">Manage your homework questions and review student submissions.</p>
 
     <div class="t-stats" id="teacher-stats">
-      <div class="t-stat"><div class="t-stat-label">Submissions</div><div class="t-stat-val">—</div></div>
-      <div class="t-stat"><div class="t-stat-label">Graded</div><div class="t-stat-val">—</div></div>
-      <div class="t-stat"><div class="t-stat-label">Pending</div><div class="t-stat-val">—</div></div>
-      <div class="t-stat"><div class="t-stat-label">Avg grade</div><div class="t-stat-val">—</div></div>
+      <div class="t-stat"><div class="t-stat-label">Total submissions</div><div class="t-stat-val">—</div></div>
+      <div class="t-stat"><div class="t-stat-label">Assignments live</div><div class="t-stat-val">—</div></div>
+      <div class="t-stat"><div class="t-stat-label">Students</div><div class="t-stat-val">—</div></div>
+      <div class="t-stat"><div class="t-stat-label">This week</div><div class="t-stat-val">—</div></div>
     </div>
 
     <div class="t-tabs">
@@ -45,25 +45,29 @@
 
     <!-- SUBMISSIONS PANEL -->
     <div class="t-panel" id="tpanel-submissions">
-      <div id="teacher-subs"><div class="empty-state"><div class="loading-dots"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div></div></div>
+      <div id="teacher-subs">
+        <div class="empty-state">
+          <div class="loading-dots"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div>
+        </div>
+      </div>
     </div>
 
     <!-- QUESTIONS PANEL -->
     <div class="t-panel" id="tpanel-questions" style="display:none">
       <div class="add-form">
-        <h3>Add new question</h3>
+        <h3>Create new assignment</h3>
         <div class="form-row">
           <div class="form-group">
             <label class="form-label">Title</label>
-            <input class="form-control" id="new-title" placeholder="e.g. Past tense practice" />
+            <input class="form-control" id="new-title" placeholder="e.g. Grammar Test — True or False" />
           </div>
           <div class="form-group">
             <label class="form-label">Question type</label>
             <select class="form-control" id="new-type" onchange="onTypeChange()">
-            <option value="truefalse">True or False</option>
-            <option value="blank">Fill in the blank</option>
-            <option value="mcq">Multiple choice</option>
-            <option value="writing">Open writing</option>
+              <option value="truefalse">True or False</option>
+              <option value="blank">Fill in the blank</option>
+              <option value="mcq">Multiple choice</option>
+              <option value="writing">Open writing</option>
             </select>
           </div>
           <div class="form-group">
@@ -76,48 +80,9 @@
           </div>
         </div>
 
-        <div class="form-group">
-          <label class="form-label">Prompt / Question</label>
-          <textarea class="form-control form-control-textarea" id="new-prompt" placeholder="Write your question here. For fill-in-the-blank, use [BLANK] where the gap should be. e.g. Yesterday I [BLANK] to school."></textarea>
-        </div>
+        <div id="questions-builder"></div>
 
-        <!-- MCQ options builder -->
-        <div id="mcq-builder-section" style="display:none">
-          <div class="form-group">
-            <label class="form-label">Answer options</label>
-            <div class="mcq-builder">
-              <div class="mcq-builder-row"><input class="form-control" id="mcq-opt-0" placeholder="Option A" /></div>
-              <div class="mcq-builder-row"><input class="form-control" id="mcq-opt-1" placeholder="Option B" /></div>
-              <div class="mcq-builder-row"><input class="form-control" id="mcq-opt-2" placeholder="Option C" /></div>
-              <div class="mcq-builder-row"><input class="form-control" id="mcq-opt-3" placeholder="Option D" /></div>
-            </div>
-          </div>
-          <div class="form-group">
-            <label class="form-label">Correct answer (type the exact option text)</label>
-            <input class="form-control" id="mcq-correct" placeholder="e.g. Option B text" />
-          </div>
-        </div>
-
-        <!-- True/False correct answer -->
-        <div id="tf-correct-section" style="display:none">
-          <div class="form-group">
-            <label class="form-label">Correct answer</label>
-            <select class="form-control" id="tf-correct">
-              <option value="True">True</option>
-              <option value="False">False</option>
-            </select>
-          </div>
-        </div>
-
-        <!-- Fill in blank correct answer -->
-        <div id="correct-answer-section" style="display:none">
-          <div class="form-group">
-            <label class="form-label">Correct answer for the blank</label>
-            <input class="form-control" id="blank-correct" placeholder="e.g. went" />
-          </div>
-        </div>
-
-        <button class="btn btn-primary" id="add-question-btn" onclick="addQuestion()">Add question</button>
+        <button class="btn btn-primary" id="add-question-btn" onclick="addAssignment()">Save assignment</button>
       </div>
 
       <div id="teacher-questions"></div>
