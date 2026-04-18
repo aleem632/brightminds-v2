@@ -525,5 +525,12 @@ function submitContact(e){
 document.addEventListener('DOMContentLoaded',()=>{
   loadHomework();
   loadTeacher();
-  renderQuestionBuilder();
+  const typeSelect = document.getElementById('new-type');
+  if(typeSelect){
+    renderQuestionBuilder();
+    typeSelect.addEventListener('change', () => {
+      newQuestions = [];
+      renderQuestionBuilder();
+    });
+  }
 });
