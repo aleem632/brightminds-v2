@@ -355,7 +355,7 @@ let newQuestions = [];
 
 function onTypeChange(){
   newQuestions = [];
-  renderQuestionBuilder();
+  setTimeout(renderQuestionBuilder, 50);
 }
 
 function renderQuestionBuilder(){
@@ -538,7 +538,13 @@ function submitContact(e){
 document.addEventListener('DOMContentLoaded',()=>{
   loadHomework();
   loadTeacher();
-  if(document.getElementById('questions-builder')){
+  const typeSelect = document.getElementById('new-type');
+  const builder = document.getElementById('questions-builder');
+  if(typeSelect && builder){
     renderQuestionBuilder();
+    typeSelect.addEventListener('change', ()=>{
+      newQuestions = [];
+      renderQuestionBuilder();
+    });
   }
 });
