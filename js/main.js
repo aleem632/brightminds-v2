@@ -11,27 +11,27 @@ function getStudentName(qid){ return localStorage.getItem('bm_name_'+qid) || '';
 function saveStudentName(qid, name){ localStorage.setItem('bm_name_'+qid, name); }
 
 // ===== HOMEWORK PAGE =====
-let questions = [];
+var questions = [];
 
 async function loadHomework(){
-  const grid = document.getElementById('hw-grid');
+  var grid = document.getElementById('hw-grid');
   if(!grid) return;
   grid.innerHTML = '<div class="empty-state"><div class="loading-dots"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div></div>';
   try{
-    const res = await fetch(API+'/questions');
+    var res = await fetch(API+'/questions');
     questions = await res.json();
     if(!questions.length){ grid.innerHTML = '<div class="empty-state">No homework yet — check back soon!</div>'; return; }
-    grid.innerHTML = questions.map(q => buildHwCard(q)).join('');
+    grid.innerHTML = questions.map(function(q){ return buildHwCard(q); }).join('');
   }catch(e){
     grid.innerHTML = '<div class="empty-state" style="color:var(--red)">Could not load homework. Please refresh the page.</div>';
   }
 }
 
 function buildHwCard(q){
-  const savedName = getStudentName(q.id);
-  const submitted = savedName ? localStorage.getItem('bm_sub_'+q.id+'_'+savedName) : null;
-  const sub = submitted ? JSON.parse(submitted) : null;
-  const isMulti = q.questions && q.questions.length > 0;
+  var savedName = getStudentName(q.id);
+  var submitted = savedName ? localStorage.getItem('bm_sub_'+q.id+'_'+savedName) : null;
+  var sub = submitted ? JSON.parse(submitted) : null;
+  var isMulti = q.questions && q.questions.length > 0;
   return '<div class="hw-card" id="hwcard-'+q.id+'">' +
     '<div class="hw-card-head" onclick="toggleHwCard(\''+q.id+'\')">' +
       '<div class="hw-card-head-left">' +
@@ -62,7 +62,9 @@ function buildMultiAnswerArea(q, sub){
   var html = '';
   q.questions.forEach(function(question, idx){
     var inputHtml = '';
-    if(q.type === 'truefalse'){
+    if(q.type === 'writing'){
+      inputHtml = '<textarea class="hw-input" id="writing-'+q.id+'-'+idx+'" placeholder="Write your answer here…" style="min-height:120px;width:100%"></textarea>';
+    } else if(q.type === 'truefalse'){
       inputHtml = '<div class="tf-options"><button class="tf-btn" id="tf-true-'+q.id+'-'+idx+'" onclick="selectTfMulti(\''+q.id+'\','+idx+',\'true\')">✓ True</button><button class="tf-btn" id="tf-false-'+q.id+'-'+idx+'" onclick="selectTfMulti(\''+q.id+'\','+idx+',\'false\')">✗ False</button></div>';
     } else if(q.type === 'blank'){
       var parts = question.text.split('[BLANK]');
@@ -96,9 +98,14 @@ function selectMcqMulti(qid, idx, optIdx){
 
 function getMultiAnswers(q){
   return q.questions.map(function(question, idx){
-    if(q.type === 'truefalse'){
-      if(document.getElementById('tf-true-'+q.id+'-'+idx) && document.getElementById('tf-true-'+q.id+'-'+idx).classList.contains('selected-true')) return 'True';
-      if(document.getElementById('tf-false-'+q.id+'-'+idx) && document.getElementById('tf-false-'+q.id+'-'+idx).classList.contains('selected-false')) return 'False';
+    if(q.type === 'writing'){
+      var el = document.getElementById('writing-'+q.id+'-'+idx);
+      return el ? el.value.trim() : '';
+    } else if(q.type === 'truefalse'){
+      var t = document.getElementById('tf-true-'+q.id+'-'+idx);
+      var f = document.getElementById('tf-false-'+q.id+'-'+idx);
+      if(t && t.classList.contains('selected-true')) return 'True';
+      if(f && f.classList.contains('selected-false')) return 'False';
       return '';
     } else if(q.type === 'blank'){
       var parts = question.text.split('[BLANK]');
@@ -113,7 +120,8 @@ function getMultiAnswers(q){
 
 async function submitMultiHw(qid){
   var q = questions.find(function(x){ return x.id === qid; });
-  var name = document.getElementById('name-'+qid) ? document.getElementById('name-'+qid).value.trim() : '';
+  var nameEl = document.getElementById('name-'+qid);
+  var name = nameEl ? nameEl.value.trim() : '';
   var msgEl = document.getElementById('hwmsg-'+qid);
   if(!name){ if(msgEl) msgEl.innerHTML = '<div class="error-msg">Please enter your name.</div>'; return; }
   var answers = getMultiAnswers(q);
@@ -164,14 +172,26 @@ function buildSingleAnswerArea(q, sub){
 
 async function submitSingleHw(qid){
   var q = questions.find(function(x){ return x.id === qid; });
-  var name = document.getElementById('name-'+qid) ? document.getElementById('name-'+qid).value.trim() : '';
+  var nameEl = document.getElementById('name-'+qid);
+  var name = nameEl ? nameEl.value.trim() : '';
   var msgEl = document.getElementById('hwmsg-'+qid);
   if(!name){ if(msgEl) msgEl.innerHTML = '<div class="error-msg">Please enter your name.</div>'; return; }
   var answer = '';
   if(q.type==='writing'){ var el = document.getElementById('ans-'+q.id); answer = el ? el.value.trim() : ''; }
-  else if(q.type==='blank'){ var parts = q.prompt.split('[BLANK]'); answer = Array.from({length:parts.length-1},function(_,i){ var el = document.getElementById('blank-'+q.id+'-0-'+i); return el ? el.value.trim() : ''; }).join(', '); }
-  else if(q.type==='truefalse'){ var te = document.getElementById('tf-true-'+q.id+'-0'); var fe = document.getElementById('tf-false-'+q.id+'-0'); if(te && te.classList.contains('selected-true')) answer='True'; else if(fe && fe.classList.contains('selected-false')) answer='False'; }
-  else if(q.type==='mcq'){ var sel = document.querySelector('input[name="mcq-'+q.id+'-0"]:checked'); answer = sel ? sel.value : ''; }
+  else if(q.type==='blank'){
+    var parts = q.prompt.split('[BLANK]');
+    answer = Array.from({length:parts.length-1},function(_,i){ var el = document.getElementById('blank-'+q.id+'-0-'+i); return el ? el.value.trim() : ''; }).join(', ');
+  }
+  else if(q.type==='truefalse'){
+    var te = document.getElementById('tf-true-'+q.id+'-0');
+    var fe = document.getElementById('tf-false-'+q.id+'-0');
+    if(te && te.classList.contains('selected-true')) answer='True';
+    else if(fe && fe.classList.contains('selected-false')) answer='False';
+  }
+  else if(q.type==='mcq'){
+    var sel = document.querySelector('input[name="mcq-'+q.id+'-0"]:checked');
+    answer = sel ? sel.value : '';
+  }
   if(!answer){ if(msgEl) msgEl.innerHTML = '<div class="error-msg">Please answer the question first.</div>'; return; }
   var btn = document.querySelector('#hwcard-'+qid+' .btn-primary');
   if(btn){ btn.disabled=true; btn.textContent='Submitting…'; }
@@ -191,7 +211,7 @@ async function submitSingleHw(qid){
   }
 }
 
-function toggleHwCard(id){ document.getElementById('hwcard-'+id) && document.getElementById('hwcard-'+id).classList.toggle('open'); }
+function toggleHwCard(id){ var el = document.getElementById('hwcard-'+id); if(el) el.classList.toggle('open'); }
 
 // ===== TEACHER DASHBOARD =====
 var allSubmissions = [];
